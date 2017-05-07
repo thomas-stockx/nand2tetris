@@ -3,6 +3,8 @@
 // by Nisan and Schocken, MIT Press.
 // File name: projects/02/ALU.hdl
 
+// Implementation by Thomas Stockx
+
 /**
  * The ALU (Arithmetic Logic Unit).
  * Computes one of the following functions:
@@ -42,5 +44,35 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    // Set correct x value
+    // if (zx == 1) set x = 0
+    Mux16(a=x, b=false, sel=zx, out=x1);
+    // if (nx == 1) set x = !x
+    Not16(in=x1, out=notx1);
+    Mux16(a=x1, b=notx1, sel=nx, out=x2);
+    
+    // Set correct y value
+    // if (zy == 1) set y = 0
+    Mux16(a=y, b=false, sel=zy, out=y1);
+    // if (ny == 1) set y = !y
+    Not16(in=y1, out=noty1);
+    Mux16(a=y1, b=noty1, sel=ny, out=y2);
+    
+    // Handle f value (either + or &)
+    // if (f == 1)  set out = x + y
+    // if (f == 0)  set out = x & y
+    Add16(a=x2, b=y2, out=xplusy);
+    And16(a=x2, b=y2, out=xandy);
+    Mux16(a=xandy, b=xplusy, sel=f, out=tempout);
+    
+    // if (no == 1) set out = !out
+    Not16(in=tempout, out=nottempout);
+    // if (out < 0) set ng = 1
+    Mux16(a=tempout, b=nottempout, sel=no, out=out, out[0..7]=out0to7, out[8..15]=out8to15, out[15]=ng);
+    
+    // if (out == 0) set zr = 1
+    Or8Way(in=out0to7, out=outpart1);
+    Or8Way(in=out8to15, out=outpart2);
+    Or(a=outpart1, b=outpart2, out=notzr);
+    Not(in=notzr, out=zr);
 }
