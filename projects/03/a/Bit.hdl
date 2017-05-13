@@ -3,6 +3,8 @@
 // by Nisan and Schocken, MIT Press.
 // File name: projects/03/a/Bit.hdl
 
+// Implementation by Thomas Stockx
+
 /**
  * 1-bit register:
  * If load[t] == 1 then out[t+1] = in[t]
@@ -14,5 +16,6 @@ CHIP Bit {
     OUT out;
 
     PARTS:
-    // Put your code here:
+    Mux(a=outDFF, b=in, sel=load, out=outMux);
+    DFF(in=outMux, out=outDFF, out=out);
 }
