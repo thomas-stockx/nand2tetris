@@ -32,7 +32,7 @@
     // while (n > 0)
     @n
     D=M
-    // if i == 0 go to END
+    // if n == 0 go to END
     @END
     D;JEQ
     
