@@ -24,6 +24,8 @@
  * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
  * than to the address resulting from executing the current instruction. 
  */
+ 
+// Implementation by Thomas Stockx
 
 CHIP CPU {
 
@@ -39,5 +41,67 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    /*
+     * Figure out the type of instruction based on first bit
+     */
+    Not(in=instruction[15], out=isAInstruction);
+    Not(in=isAInstruction, out=isCInstruction);
+    
+    /*
+     * D Register
+     */
+    // See if we should write to the D register based on d2
+    And(a=instruction[4], b=isCInstruction, out=writeD);
+    // Wire up the D Register
+    DRegister(in=outALU, load=writeD, out=outD);
+    
+    
+    /*
+     * Output if we write M based on d3
+     */
+    And(a=instruction[3], b=isCInstruction, out=writeM);
+    
+    
+    /*
+     * A Register
+     */
+    // Feed correct data to A Register: instruction (A), or ALU output(C)
+    Mux16(a=outALU, b=instruction, sel=isAInstruction, out=inA);
+    // Load A if A instruction or d1 set in C instruction
+    Or(a=isAInstruction, b=instruction[5], out=loadA);
+    // Now wire up the A Register, and also send out the addressM output
+    ARegister(in=inA, load=loadA, out=outA, out[0..14]=addressM);
+    
+    /*
+     * ALU
+     */
+    // Handle the mux in front of the ALU to load either A or M
+    // based on a of C instruction
+    Mux16(a=outA, b=inM, sel=instruction[12], out=AorM);
+    // Hook up the ALU with the correct control bits
+    // Send the output to outALU (internal use) and to the outM value
+    // Capture the zr and ng output control bits for the PC
+    ALU(x=outD, y=AorM, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=outALU, zr=zr, ng=ng);
+    
+    /**
+     * Program Counter
+     */
+    // Prepare JMP logic
+    // Check if our output is negative or zero
+    Or(a=zr, b=ng, out=negativeOrZeroALU);
+    // Check if our output is positive
+    Not(in=negativeOrZeroALU, out=positiveALU);
+    // Jump if less than
+    And(a=instruction[2], b=ng, out=jump1);
+    // Jump if equals
+    And(a=instruction[1], b=zr, out=jump2);
+    // Jump if greater than
+    And(a=instruction[0], b=positiveALU, out=jump3);
+    // See if we should do a jump by OR'ing all jumps
+    // And check if we're handling a C instruction
+    Or(a=jump1, b=jump2, out=jump4);
+    Or(a=jump3, b=jump4, out=jump5);
+    And(a=isCInstruction, b=jump5, out=jump);
+    // Wire up PC
+    PC(in=outA, load=jump, inc=true, reset=reset, out[0..14]=pc);
 }
