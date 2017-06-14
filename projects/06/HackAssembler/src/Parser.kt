@@ -46,11 +46,7 @@ class Parser(val scanner: Scanner) {
     fun symbol(): String {
         if(commandType() == CommandType.A_COMMAND) {
             var value = currentCommand.substring(1)
-            var binary = Integer.toBinaryString(Integer.parseInt(value))
-            while (binary.length < 15) {
-                binary = "0" + binary
-            }
-            return binary
+            return integerToBinary(value)
         }
 
         if(commandType() == CommandType.L_COMMAND) {
@@ -62,8 +58,8 @@ class Parser(val scanner: Scanner) {
 
     fun dest(): String {
         if (commandType() == CommandType.C_COMMAND) {
-            return currentCommand.split("=")[0]
-
+            var temp = currentCommand.split("=")[0]
+            return if (currentCommand.contains(";")) "" else temp
         }
 
         return ""
@@ -71,7 +67,7 @@ class Parser(val scanner: Scanner) {
 
     fun comp(): String {
         if (commandType() == CommandType.C_COMMAND) {
-            var temp = currentCommand.split("=")[1]
+            var temp = if (currentCommand.contains("=")) currentCommand.split("=")[1] else currentCommand
             return temp.split(";")[0]
         }
 
@@ -80,15 +76,19 @@ class Parser(val scanner: Scanner) {
 
     fun jump(): String {
         if (commandType() == CommandType.C_COMMAND && currentCommand.contains(";")) {
-            currentCommand.split(";")[1]
+            return currentCommand.split(";")[1]
         }
 
         return ""
     }
 
-
-
-
+    fun integerToBinary(integer: String): String {
+        var binary = Integer.toBinaryString(Integer.parseInt(integer))
+        while (binary.length < 15) {
+            binary = "0" + binary
+        }
+        return binary
+    }
 
 
 }

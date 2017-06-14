@@ -11,7 +11,7 @@ fun main(args: Array<String>) {
     val parser = Parser(scanner)
     val code = Code()
 
-    val outputFile = File("test.hack")
+    val outputFile = File(args[0].split(".asm")[0] + ".hack")
 
     // clean the output file
     outputFile.writeText("")
