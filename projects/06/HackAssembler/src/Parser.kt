@@ -3,7 +3,7 @@ import java.util.*
 /**
  * Created by thomasstockx on 10/06/2017.
  */
-class Parser(val scanner: Scanner) {
+class Parser(var scanner: Scanner) {
 
     var currentCommand = ""
 
@@ -13,6 +13,9 @@ class Parser(val scanner: Scanner) {
         return scanner.hasNextLine()
     }
 
+    fun reset() {
+        scanner = scanner.reset()
+    }
 
     fun advance() {
         if (hasMoreCommands()) {
@@ -45,12 +48,11 @@ class Parser(val scanner: Scanner) {
 
     fun symbol(): String {
         if(commandType() == CommandType.A_COMMAND) {
-            var value = currentCommand.substring(1)
-            return integerToBinary(value)
+            return currentCommand.substring(1)
         }
 
         if(commandType() == CommandType.L_COMMAND) {
-            return currentCommand.substring(1, currentCommand.length - 2)
+            return currentCommand.substring(1, currentCommand.length - 1)
         }
 
         return ""
