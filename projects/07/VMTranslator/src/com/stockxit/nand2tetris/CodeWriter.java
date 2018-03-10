@@ -12,7 +12,7 @@ public class CodeWriter {
         mPrintWriter = null;
         try {
             mPrintWriter = new PrintWriter(new FileWriter(file));
-            mPrintWriter.close();
+            //mPrintWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -28,8 +28,21 @@ public class CodeWriter {
 
     public void writeArithmetic(String command) {
         // TODO
+        mPrintWriter.printf("// %s\n", command);
         switch (command) {
             case "add":
+                // get value at SP--
+                mPrintWriter.println("@SP");
+                mPrintWriter.println("AM=M-1");
+                mPrintWriter.println("D=M");
+                // get value at SP-2
+                mPrintWriter.println("@SP");
+                mPrintWriter.println("AM=M-1");
+                // add values and store in SP
+                mPrintWriter.println("M=D+M");
+                // increment SP;
+                mPrintWriter.println("@SP");
+                mPrintWriter.println("M=M+1");
                 break;
             case "sub":
                 break;
@@ -54,6 +67,22 @@ public class CodeWriter {
         // TODO
         switch (commandType) {
             case C_PUSH:
+                mPrintWriter.printf("// push %s %d\n", segment, index);
+                switch (segment) {
+                    case "constant":
+                        // store value in D
+                        mPrintWriter.println("@"+index);
+                        mPrintWriter.println("D=A");
+                        // use value of SP for address
+                        mPrintWriter.println("@SP");
+                        mPrintWriter.println("A=M");
+                        // store constant in at SP
+                        mPrintWriter.println("M=D");
+                        // increment SP
+                        mPrintWriter.println("@SP");
+                        mPrintWriter.println("M=M+1");
+                        break;
+                }
                 break;
             case C_POP:
                 break;

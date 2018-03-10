@@ -50,17 +50,21 @@ public class Parser {
             return null;
         }
 
+        if (commandType() == CommandType.C_ARITHMETIC) {
+            return mCurrentCommand;
+        }
+
         return mCurrentCommand.split(" ")[1];
     }
 
-    public String arg2() {
+    public int arg2() {
         if (commandType() == CommandType.C_PUSH
                 || commandType() == CommandType.C_POP
                 || commandType() == CommandType.C_FUNCTION
                 || commandType() == CommandType.C_CALL) {
-            return mCurrentCommand.split(" ")[2];
+            return Integer.valueOf(mCurrentCommand.split(" ")[2]);
         }
 
-        return null;
+        return 0;
     }
 }
