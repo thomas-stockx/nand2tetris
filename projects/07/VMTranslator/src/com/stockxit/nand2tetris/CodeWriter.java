@@ -8,6 +8,8 @@ import java.io.PrintWriter;
 public class CodeWriter {
     private PrintWriter mPrintWriter;
 
+    private int labelCount = 0;
+
     public CodeWriter(File file) {
         mPrintWriter = null;
         try {
@@ -29,36 +31,57 @@ public class CodeWriter {
     public void writeArithmetic(String command) {
         // TODO
         mPrintWriter.printf("// %s\n", command);
+
+        // do actual operation
         switch (command) {
             case "add":
-                // get value at SP--
-                mPrintWriter.println("@SP");
-                mPrintWriter.println("AM=M-1");
-                mPrintWriter.println("D=M");
-                // get value at SP-2
-                mPrintWriter.println("@SP");
-                mPrintWriter.println("AM=M-1");
-                // add values and store in SP
+                popStackToD();
+                decrementStackPointer();
+                loadStackPointerToA();
                 mPrintWriter.println("M=D+M");
-                // increment SP;
-                mPrintWriter.println("@SP");
-                mPrintWriter.println("M=M+1");
+                incrementStackPointer();
                 break;
             case "sub":
+                popStackToD();
+                decrementStackPointer();
+                loadStackPointerToA();
+                mPrintWriter.println("M=M-D");
+                incrementStackPointer();
                 break;
             case "neg":
+                decrementStackPointer();
+                loadStackPointerToA();
+                mPrintWriter.println("M=-M");
+                incrementStackPointer();
                 break;
             case "eq":
+                writeCompareLogic("JEQ");
                 break;
             case "gt":
+                writeCompareLogic("JGT");
                 break;
             case "lt":
+                writeCompareLogic("JLT");
                 break;
             case "and":
+                popStackToD();
+                decrementStackPointer();
+                loadStackPointerToA();
+                mPrintWriter.println("M=D&M");
+                incrementStackPointer();
                 break;
             case "or":
+                popStackToD();
+                decrementStackPointer();
+                loadStackPointerToA();
+                mPrintWriter.println("M=D|M");
+                incrementStackPointer();
                 break;
             case "not":
+                decrementStackPointer();
+                loadStackPointerToA();
+                mPrintWriter.println("M=!M");
+                incrementStackPointer();
                 break;
         }
     }
@@ -73,18 +96,23 @@ public class CodeWriter {
                         // store value in D
                         mPrintWriter.println("@"+index);
                         mPrintWriter.println("D=A");
-                        // use value of SP for address
-                        mPrintWriter.println("@SP");
-                        mPrintWriter.println("A=M");
-                        // store constant in at SP
-                        mPrintWriter.println("M=D");
-                        // increment SP
-                        mPrintWriter.println("@SP");
-                        mPrintWriter.println("M=M+1");
+                        pushDToStack();
                         break;
                 }
                 break;
             case C_POP:
+                switch (segment) {
+                    case "constant":
+                        mPrintWriter.println("@"+index);
+                        mPrintWriter.println("D=A");
+                        mPrintWriter.println("@R13");
+                        mPrintWriter.println("M=D");
+                        popStackToD();
+                        mPrintWriter.println("@R13");
+                        mPrintWriter.println("A=M");
+                        mPrintWriter.println("M=D");
+                }
+
                 break;
         }
     }
@@ -92,4 +120,52 @@ public class CodeWriter {
     public void close() {
         mPrintWriter.close();
     }
+
+
+    private void incrementStackPointer() {
+        mPrintWriter.println("@SP");
+        mPrintWriter.println("M=M+1");
+    }
+
+    private void decrementStackPointer() {
+        mPrintWriter.println("@SP");
+        mPrintWriter.println("M=M-1");
+    }
+
+    private void popStackToD() {
+        decrementStackPointer();
+        mPrintWriter.println("A=M");
+        mPrintWriter.println("D=M");
+    }
+
+    private void pushDToStack() {
+        loadStackPointerToA();
+        mPrintWriter.println("M=D");
+        incrementStackPointer();
+    }
+
+    private void loadStackPointerToA() {
+        mPrintWriter.println("@SP");
+        mPrintWriter.println("A=M");
+    }
+
+    private void writeCompareLogic(String jumpCommand) {
+        popStackToD();
+        decrementStackPointer();
+        loadStackPointerToA();
+        mPrintWriter.println("D=M-D");
+        mPrintWriter.println("@LABEL" + labelCount);
+        mPrintWriter.println("D;"+jumpCommand);
+        loadStackPointerToA();
+        mPrintWriter.println("M=0");
+        mPrintWriter.println("@ENDLABEL" + labelCount);
+        mPrintWriter.println("0;JMP");
+        mPrintWriter.println("(LABEL" + labelCount + ")");
+        loadStackPointerToA();
+        mPrintWriter.println("M=-1");
+        mPrintWriter.println("(ENDLABEL" + labelCount + ")");
+        incrementStackPointer();
+        labelCount++;
+    }
+
 }
