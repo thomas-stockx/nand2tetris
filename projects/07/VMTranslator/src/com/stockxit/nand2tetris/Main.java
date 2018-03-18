@@ -6,22 +6,45 @@ import java.util.Scanner;
 
 public class Main {
 
+    private static CodeWriter codeWriter;
+
     public static void main(String[] args) {
-        // TODO support folders (multiple input files)
         File inputFile = new File(args[0]);
-        // TODO support multiple output files
-        File outputFile = new File(args[0].split(".vm")[0] + ".asm");
+
+        codeWriter = new CodeWriter(inputFile);
+        if (inputFile.isDirectory()) {
+            iterateFiles(inputFile.listFiles());
+        } else {
+            translate(inputFile);
+        }
+        codeWriter.close();
+    }
+
+    private static void iterateFiles(File[] files) {
+        for (File file : files) {
+            if (file.isDirectory()) {
+                iterateFiles(file.listFiles()); // Calls same method again.
+            } else {
+                if (file.getName().endsWith(".vm")) {
+                    translate(file);
+                }
+            }
+        }
+    }
+
+    private static void translate( File file) {
+        File outputFile = new File(file.getName().split(".vm")[0] + ".asm");
 
 
         Scanner inputScanner = null;
         try {
-            inputScanner = new Scanner(inputFile);
+            inputScanner = new Scanner(file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
         Parser parser = new Parser(inputScanner);
-        CodeWriter codeWriter = new CodeWriter(outputFile);
+        codeWriter.setFileName(outputFile.getName());
 
         while (parser.hasMoreCommands()) {
             parser.advance();
@@ -35,7 +58,5 @@ public class Main {
                     break;
             }
         }
-        codeWriter.close();
-
     }
 }
